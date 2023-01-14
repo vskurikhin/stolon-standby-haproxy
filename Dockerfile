@@ -30,14 +30,13 @@ RUN tar zxvf /tmp/stolon.tar.gz -C /tmp && \
   chmod +x /usr/bin/stolonctl
 
 COPY docker/config.yml /app/config.yml
-
 COPY docker/haproxy.cfg /usr/local/etc/haproxy/config.cfg 
 COPY docker/stolon_haproxy.j2 /app/stolon_haproxy.j2
+
 RUN touch /usr/local/etc/haproxy/stolon-config.cfg
 
 COPY docker/supervisord.conf /app/supervisord.conf
-
 COPY src /app/src
 
-EXPOSE 35432 18181
+EXPOSE 35432 45432 18181
 CMD ["supervisord", "-c", "/app/supervisord.conf"]

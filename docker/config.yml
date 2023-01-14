@@ -1,4 +1,5 @@
-postgres_haproxy_port: 35432
+postgres_master_haproxy_port: 35432
+postgres_standby_haproxy_port: 45432
 postgres_haproxy_config: '/usr/local/etc/haproxy/stolon-config.cfg'
 haproxy_reload_command: 'kill -USR2 $(cat /tmp/haproxy.pid)'
 timeout: 30
