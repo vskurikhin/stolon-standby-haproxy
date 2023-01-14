@@ -57,38 +57,39 @@ if __name__ == '__main__':
 
     while True:
 
-        stolon_json = json.loads(check_output(
-            "stolonctl clusterdata read", shell=True))
-        haproxy_template = open('./stolon_haproxy.j2', 'r')
+        try:
+            stolon_json = json.loads(check_output(
+                "stolonctl clusterdata read", shell=True))
+            haproxy_template = open('./stolon_haproxy.j2', 'r')
 
-        standby_list = get_stolon_servers(stolon_json, config['fallback_to_master'])
-        
-        # if np servers to route - skip this iteration and print the error
-        if standby_list == []:
-            logging.error("No available backends!")
-            continue
+            standby_list = get_stolon_servers(stolon_json, config['fallback_to_master'])
 
+            # if np servers to route - skip this iteration and print the error
+            if standby_list == []:
+                logging.error("No available backends!")
+                continue
 
-        # print(standby_list)
+            template = Template(haproxy_template.read())
+            new_render = template.render(servers=standby_list,
+                                         frontend_port=config['postgres_haproxy_port'],
+                                         inter_timeout_ms=config['inter_timeout_ms'],
+                                         fall_count=config['inter_timeout_ms'],
+                                         rise_count=config['rise_count'])
 
-        template = Template(haproxy_template.read())
-        new_render = template.render(servers=standby_list,
-                                     frontend_port=config['postgres_haproxy_port'], 
-                                     inter_timeout_ms=config['inter_timeout_ms'], 
-                                     fall_count=config['inter_timeout_ms'], 
-                                     rise_count=config['rise_count'])
+            haproxy_config = open(config['postgres_haproxy_config'], 'r')
+            if haproxy_config.read() == new_render:
+                logging.info("Config not changed!")
+            else:
+                logging.info("Config changed!")
+                haproxy_config.close()
+                haproxy_config = open(config['postgres_haproxy_config'], 'w')
+                haproxy_config.write(new_render)
+                run(config['haproxy_reload_command'], shell=True, check=True)
 
-        haproxy_config = open(config['postgres_haproxy_config'], 'r')
-        if haproxy_config.read() == new_render:
-            logging.info("Config not changed!")
-        else:
-            logging.info("Config changed!")
             haproxy_config.close()
-            haproxy_config = open(config['postgres_haproxy_config'], 'w')
-            haproxy_config.write(new_render)
-            run(config['haproxy_reload_command'], shell=True, check=True)
+            haproxy_template.close()
 
-        haproxy_config.close()
-        haproxy_template.close()
+        except CalledProcessError as e:
+            print(e)
 
         time.sleep(config['timeout'])
