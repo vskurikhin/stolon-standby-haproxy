@@ -1,10 +1,21 @@
+frontend stolon_master_frontend
+	mode tcp
+	bind *:{{ frontend_master_port }}
+	use_backend stolon_master_backend
+
+backend stolon_master_backend
+	mode tcp
+	balance roundrobin
+        server stolon_master {{ master }} check port {{ master.split(":")[1] }} inter {{ inter_timeout_ms }} fall {{ fall_count }} rise {{ rise_count }}
+
 frontend stolon_standby_frontend
 	mode tcp
-	bind *:{{ frontend_port }}
+	bind *:{{ frontend_standby_port }}
 	use_backend stolon_standby_backend
 
 backend stolon_standby_backend
 	mode tcp
 	balance roundrobin
-{% for server in servers %}        server stolon_standby_{{ loop.index }} {{ server }} check port {{ server.split(":")[1] }} inter {{ inter_timeout_ms }} fall {{ fall_count }} rise {{ rise_count }}
+        server stolon_master {{ master }} check port {{ master.split(":")[1] }} inter {{ inter_timeout_ms }} fall {{ fall_count }} rise {{ rise_count }}
+{% for server in pg_servers %}        server stolon_standby_{{ loop.index }} {{ server }} check port {{ server.split(":")[1] }} inter {{ inter_timeout_ms }} fall {{ fall_count }} rise {{ rise_count }}
 {% endfor %}
