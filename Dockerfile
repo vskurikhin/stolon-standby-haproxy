@@ -21,7 +21,7 @@ RUN apt-get update && \
 
 #install script requirements
 COPY requirements.txt /app/requirements.txt
-RUN pip3 install --no-cache-dir -r /app/requirements.txt
+RUN pip3 install markupsafe==2.0.1 && pip3 install --no-cache-dir -r /app/requirements.txt
 
 #install stolonctl
 ADD https://github.com/sorintlab/stolon/releases/download/v${STOLONCTL_VERSION}/stolon-v${STOLONCTL_VERSION}-linux-amd64.tar.gz /tmp/stolon.tar.gz
